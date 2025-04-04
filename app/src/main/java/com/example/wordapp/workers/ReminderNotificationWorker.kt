@@ -40,7 +40,6 @@ class ReminderNotificationWorker(
             manager.createNotificationChannel(channel)
         }
 
-        // Апп руу орох PendingIntent
         val intent = Intent(applicationContext, MainActivity::class.java)
         val pendingIntent: PendingIntent? = TaskStackBuilder.create(applicationContext).run {
             addNextIntentWithParentStack(intent)
@@ -48,21 +47,19 @@ class ReminderNotificationWorker(
         }
 
         val notification = NotificationCompat.Builder(applicationContext, channelId)
-            .setSmallIcon(R.drawable.ic_launcher_background) // Ресурс файлаа үүсгэж, ic_notification.png эсвэл ic_notification.xml байх ёстой
+            .setSmallIcon(R.drawable.ic_launcher_background)
             .setContentTitle("Үгсээ давтах цаг боллоо!")
             .setContentText("Өдөрт нэг удаа шинэ үгсээ шалгаарай.")
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .build()
 
-        // Android 13 (API 33) болон дараас мэдэгдэл өгөх permission шаардлагатай тул зөвшөөрлийг шалгана.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(
                     applicationContext,
                     Manifest.permission.POST_NOTIFICATIONS
                 ) != PackageManager.PERMISSION_GRANTED
             ) {
-                // Зөвшөөрөл олдоогүй бол мэдэгдэл өгөх үйлдлийг үлүүлж эсвэл өөр тохиргоог хийнэ.
                 return
             }
         }

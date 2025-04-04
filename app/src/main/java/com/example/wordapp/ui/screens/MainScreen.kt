@@ -1,6 +1,7 @@
 package com.example.wordapp.ui.view
 
-import android.util.Log
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -13,23 +14,23 @@ import com.example.wordapp.data.datastore.DisplayMode
 import com.example.wordapp.ui.viewmodel.WordViewModel
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun MainScreen(
     viewModel: WordViewModel,
     onAddWordClicked: () -> Unit,
     onSettingsClicked: () -> Unit,
-    onEditWordClicked: (Int) -> Unit  // Хэрэв шаардлагатай бол ашиглагдах боловч энд бид toggle үйлдэл хийх болно.
+    onEditWordClicked: (Int) -> Unit
 ) {
     val uiState = viewModel.uiState.collectAsState().value
     val currentWord = uiState.words.getOrNull(uiState.currentIndex)
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+
+    // Log display mode for debugging
     LaunchedEffect(uiState.displayMode) {
-        Log.d("DisplayModeState", "Current mode: ${uiState.displayMode}")
+        println("Display mode: ${uiState.displayMode}")
     }
-    // Монгол үг харуулах эсэхийг удирдах хувьсагч
-    var showMongolian by remember { mutableStateOf(uiState.displayMode != DisplayMode.FOREIGN_ONLY) }
 
     Scaffold(
         topBar = {
@@ -60,49 +61,95 @@ fun MainScreen(
                 Text("Одоогоор үг байхгүй байна.")
             } else {
                 currentWord?.let { word ->
-                    // Гадаад үгийг харуулах
-                    Text(
-                        text = word.foreignWord,
-                        style = MaterialTheme.typography.headlineMedium,
-                        modifier = Modifier
-                            .padding(8.dp)
-                    )
-
-                    // Монгол үгийг харуулах хэсэг
                     when (uiState.displayMode) {
-                        DisplayMode.FOREIGN_ONLY -> {
-                            // Хэрэв зөвхөн гадаад үг харагдахаар тохирсон бол, товшсон үед нь нээж харуулах
-                            if (!showMongolian) {
-                                Text(
-                                    text = "********",
-                                    style = MaterialTheme.typography.headlineMedium,
-                                    modifier = Modifier
-                                        .padding(8.dp)
+                        DisplayMode.BOTH -> {
+                            // Хоёр хэл: Гадаад болон Монгол үгийг энгийн харуулах
+                            Box(
+                                modifier = Modifier.combinedClickable(
+                                    onClick = { onEditWordClicked(word.id) },
+                                    onLongClick = { onEditWordClicked(word.id) }
                                 )
-                            } else {
+                            ) {
+                            Text(
+                                text = word.foreignWord,
+                                style = MaterialTheme.typography.headlineMedium,
+                                modifier = Modifier.padding(8.dp)
+                            )
+                            }
+                            Box(
+                                modifier = Modifier.combinedClickable(
+                                    onClick = { onEditWordClicked(word.id) },
+                                    onLongClick = { onEditWordClicked(word.id) }
+                                )
+                            ){
+
+                            Text(
+                                text = word.mongolianWord,
+                                style = MaterialTheme.typography.headlineMedium,
+                                modifier = Modifier.padding(8.dp)
+                            )
+                            }
+                        }
+                        DisplayMode.FOREIGN_ONLY -> {
+                            // Гадаад үг үргэлж харуулах
+                            var isForeignRevealed by remember(currentWord) { mutableStateOf(false) }
+                            Box(
+                                modifier = Modifier.combinedClickable(
+                                    onClick = { onEditWordClicked(word.id) },
+                                    onLongClick = { onEditWordClicked(word.id) }
+                                )
+                            ) {
                                 Text(
-                                    text = word.mongolianWord,
+                                    text = word.foreignWord,
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    modifier = Modifier.padding(8.dp)
+                                )
+                            }
+
+                            // Монгол үгийг "****" гэж нуугдаж харуулах, дарсан үед ил гарч өөрчлөгдөх
+                            var isMongolianRevealed by remember(currentWord) { mutableStateOf(false) }
+                            Box(
+                                modifier = Modifier.combinedClickable(
+                                    onClick = { isMongolianRevealed = !isMongolianRevealed },
+                                    onLongClick = { onEditWordClicked(word.id) }
+                                )
+                            ) {
+                                Text(
+                                    text = if (isMongolianRevealed) word.mongolianWord else "****",
                                     style = MaterialTheme.typography.headlineMedium,
                                     modifier = Modifier.padding(8.dp)
                                 )
                             }
                         }
                         DisplayMode.MONGOLIAN_ONLY -> {
-                            Text(
-                                text = word.mongolianWord,
-                                style = MaterialTheme.typography.headlineMedium,
-                                modifier = Modifier.padding(8.dp)
-                            )
-                        }
-                        DisplayMode.BOTH -> {
-                            // Хэрэв хоёр хэл харуулах тохиргоо байгаа бол, Монгол үгийг товшсон үед showMongolian-г toggle хийхгүй,
-                            // эсвэл уг хэсгийг өөр үйлдэлд ашиглаж болно.
-                            Text(
-                                text = word.mongolianWord,
-                                style = MaterialTheme.typography.headlineMedium,
-                                modifier = Modifier
-                                    .padding(8.dp)
-                            )
+                            // Монгол үг үргэлж харуулах
+
+                            // Гадаад үгийг "****" гэж нуугдаж харуулах, дарсан үед ил гарч өөрчлөгдөх
+                            var isForeignRevealed by remember(currentWord) { mutableStateOf(false) }
+                            Box(
+                                modifier = Modifier.combinedClickable(
+                                    onClick = { isForeignRevealed = !isForeignRevealed },
+                                    onLongClick = { onEditWordClicked(word.id) }
+                                )
+                            ) {
+                                Text(
+                                    text = if (isForeignRevealed) word.foreignWord else "****",
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    modifier = Modifier.padding(8.dp)
+                                )
+                            }
+                            Box(
+                                modifier = Modifier.combinedClickable(
+                                    onClick = { onEditWordClicked(word.id) },
+                                    onLongClick = { onEditWordClicked(word.id) }
+                                )
+                            ) {
+                                Text(
+                                    text = word.mongolianWord,
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    modifier = Modifier.padding(8.dp)
+                                )
+                            }
                         }
                     }
 
@@ -126,20 +173,16 @@ fun MainScreen(
 
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    // Шинэчлэх болон Устгах товчнууд
+                    // Засах болон Устгах товчнууд
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Button(
-                            onClick = {
-                                // "Шинэчлэх" товч дарахад Монгол үгийн харагдах байдлыг toggle хийнэ.
-                                showMongolian = !showMongolian
-                            },
+                            onClick = { onEditWordClicked(word.id) },
                             enabled = !uiState.isWordListEmpty
                         ) {
-                            Text("Шинэчлэх")
+                            Text("Засах")
                         }
                         Button(
                             onClick = {
-                                // Устгахын өмнө баталгаажуулах диалог
                                 scope.launch {
                                     val result = snackbarHostState.showSnackbar(
                                         message = "Устгах уу?",

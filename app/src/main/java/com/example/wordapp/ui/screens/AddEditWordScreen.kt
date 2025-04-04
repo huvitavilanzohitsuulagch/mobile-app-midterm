@@ -8,7 +8,6 @@ import androidx.compose.ui.unit.dp
 import com.example.wordapp.data.model.Word
 import com.example.wordapp.ui.viewmodel.WordViewModel
 import kotlinx.coroutines.launch
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddEditWordScreen(
@@ -22,7 +21,8 @@ fun AddEditWordScreen(
 
     LaunchedEffect(key1 = wordId) {
         if (wordId != -1) {
-            val word = viewModel.uiState.value.words.find { it.id == wordId }
+            // getWordById-г дуудаж, үр дүнг textfield-үүдэд prefill хийж байна.
+            val word = viewModel.getWordById(wordId)
             word?.let {
                 foreignText = it.foreignWord
                 mongolianText = it.mongolianWord
@@ -60,13 +60,12 @@ fun AddEditWordScreen(
                 onClick = {
                     scope.launch {
                         if (wordId == -1) {
-                            // Шинээр нэмэх
+                            // Шинээр үг нэмэх үед хоёр талбарын утгыг ашиглана.
                             viewModel.insertWord(Word(foreignWord = foreignText, mongolianWord = mongolianText))
                         } else {
-                            // Засах
-                            val existing = viewModel.uiState.value.words.find { it.id == wordId }
-                            existing?.let {
-                                val updated = it.copy(foreignWord = foreignText, mongolianWord = mongolianText)
+                            // Засах үйлдэл: getWordById-оор өгөгдлийн сангаас тухайн үгийг авч шинэчилнэ.
+                            viewModel.getWordById(wordId)?.let { existing ->
+                                val updated = existing.copy(foreignWord = foreignText, mongolianWord = mongolianText)
                                 viewModel.updateWord(updated)
                             }
                         }

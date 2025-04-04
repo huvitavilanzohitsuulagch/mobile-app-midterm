@@ -54,9 +54,11 @@ class WordViewModel(
     fun previousWord() {
         val currentState = _uiState.value
         if (currentState.words.isNotEmpty()) {
-            val newIndex =
-                if (currentState.currentIndex - 1 < 0) currentState.words.size - 1
-                else currentState.currentIndex - 1
+            val newIndex = if (currentState.currentIndex - 1 < 0) {
+                currentState.words.size - 1
+            } else {
+                currentState.currentIndex - 1
+            }
             _uiState.value = currentState.copy(currentIndex = newIndex)
         }
     }
@@ -82,5 +84,8 @@ class WordViewModel(
 
     suspend fun updateWord(word: Word) {
         repository.updateWord(word)
+    }
+    suspend fun getWordById(id: Int): Word? {
+        return repository.getWordById(id)
     }
 }
