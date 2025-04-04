@@ -1,0 +1,82 @@
+package com.example.wordapp.ui.view
+
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.example.wordapp.data.model.Word
+import com.example.wordapp.ui.viewmodel.WordViewModel
+import kotlinx.coroutines.launch
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AddEditWordScreen(
+    viewModel: WordViewModel,
+    wordId: Int,
+    onDone: () -> Unit
+) {
+    val scope = rememberCoroutineScope()
+    var foreignText by remember { mutableStateOf("") }
+    var mongolianText by remember { mutableStateOf("") }
+
+    LaunchedEffect(key1 = wordId) {
+        if (wordId != -1) {
+            val word = viewModel.uiState.value.words.find { it.id == wordId }
+            word?.let {
+                foreignText = it.foreignWord
+                mongolianText = it.mongolianWord
+            }
+        }
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(if (wordId == -1) "Add Word" else "Edit Word") }
+            )
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            OutlinedTextField(
+                value = foreignText,
+                onValueChange = { foreignText = it },
+                label = { Text("Foreign Word") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            OutlinedTextField(
+                value = mongolianText,
+                onValueChange = { mongolianText = it },
+                label = { Text("Mongolian Word") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Button(
+                onClick = {
+                    scope.launch {
+                        if (wordId == -1) {
+                            // Шинээр нэмэх
+                            viewModel.insertWord(Word(foreignWord = foreignText, mongolianWord = mongolianText))
+                        } else {
+                            // Засах
+                            val existing = viewModel.uiState.value.words.find { it.id == wordId }
+                            existing?.let {
+                                val updated = it.copy(foreignWord = foreignText, mongolianWord = mongolianText)
+                                viewModel.updateWord(updated)
+                            }
+                        }
+                        onDone()
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Хадгалах")
+            }
+        }
+    }
+}
