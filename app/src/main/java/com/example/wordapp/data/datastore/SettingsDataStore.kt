@@ -14,7 +14,6 @@ class SettingsDataStore(private val context: Context) {
         private val DISPLAY_MODE_KEY = stringPreferencesKey("display_mode")
         private const val DEFAULT_MODE = "BOTH"
     }
-
     // displayMode-г унших
     val displayModeFlow = context.settingsDataStore.data.map { preferences ->
         when (preferences[DISPLAY_MODE_KEY] ?: DEFAULT_MODE) {

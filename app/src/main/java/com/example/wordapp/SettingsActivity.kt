@@ -5,8 +5,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.material3.*
-import com.example.wordapp.data.datastore.DisplayMode
 import com.example.wordapp.data.model.WordDatabase
 import com.example.wordapp.data.reposity.WordRepository
 import com.example.wordapp.ui.theme.WordAppTheme
